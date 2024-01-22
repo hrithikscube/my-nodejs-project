@@ -5,13 +5,15 @@ const logger = require('morgan')
 const fs = require('fs')
 const bodyParser = require('body-parser')
 
+const pool = require('./db')
+
 const app = express()
 
-const axios = require('axios')
-
-app.use(logger('tiny', {
-    stream: fs.createWriteStream('./access.log', { flags: 'a' })
-}));
+app.use(
+  logger('tiny', {
+    stream: fs.createWriteStream('./access.log', { flags: 'a' }),
+  }),
+)
 
 app.use(bodyParser.json())
 
@@ -24,24 +26,23 @@ app.use('/products', productRoutes)
 app.use('/users', userRoutes)
 
 app.get('/', (req, res) => {
-    res.status(200).json({
-        message: 'Welcome to node project api endpoint'
-    })
+  res.status(200).json({
+    message: 'Welcome to node project api endpoint',
+  })
 })
 
 // test endpoint
-app.get('/test', (req, res) => {
-
-    axios.get('https://www.google.com/search?q=harddisk')
-        .then((response) => {
-            let { data } = response
-            res.send(data)
-        })
-        .catch((error) => {
-            res.status(404).send('Something went wrong')
-        })
+app.get('/test', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM users')
+    console.log(result.rows)
+    res.send(result.rows)
+  } catch (e) {
+    console.log('Unable to query the db')
+  }
 })
 
+
 app.listen(PORT, () => {
-    console.log('Server running at port 3333')
+  console.log('Server running at port 3333')
 })
